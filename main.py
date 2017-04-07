@@ -16,6 +16,7 @@
 #
 import webapp2
 import cgi
+import re
 
 # html boilerplate for the top of every page
 page_header = """
@@ -43,48 +44,70 @@ page_footer = """
 
 class Index(webapp2.RequestHandler):
 	def get(self):
-			username = """
-			<form>
+			forms = """
+			<form action="/verify" method="post">
 				<label>
 					Username:
 					<input type="text" name="username"/>
 				</label>
-			</form>
-			"""
-			
-			password = """
-			<form>
+				<br>
+				
 				<label>
 					Password:
-					<input type="text" name="password"/>
+					<input type="password" name="password"/>
 				</label>
-			</form>
-			"""
-			
-			verifypassword = """
-			<form>
+				<br>
+				
 				<label>
 					Verify Password:
-					<input type="text" name="password_verify"/>
+					<input type="password" name="password_verify"/>
 				</label>
-			</form>
-			"""
-			
-			email = """
-			<form>
+				<br>
+				
 				<label>
 					Email (optional):
 					<input type="text" name="email_address"/>
 				</label>
+				<br>
+				
+				<input type="submit" value="Submit"/>
 			</form>
 			"""
-			forms = username + password + verifypassword + email
+
 			content = page_header + forms + page_footer
 			self.response.write(content)
-	
+			
+class Verification(webapp2.RequestHandler):
+	def post(self):
+		username = self.request.get("username")
+		USER_RE = re.compile("^[a-zA-Z0-9_-]{3,20}$")
+		password = self.request.get("password")
+		PASS_RE = re.compile("^.{3,20}$")
+		ver_password = self.request.get("password_verify")
+		email = self.request.get("email_address")
+		EMAIL_RE = self.request.get("^[\S]+@[\S]+.[\S]+$")
+		
+		def valid_username(username):
+			return username and USER_RE.match(username)
+
+		PASS_RE = re.compile(r"^.{3,20}$")
+		def valid_password(password):
+			return password and PASS_RE.match(password)
+
+		EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
+		def valid_email(email):
+			return not email or EMAIL_RE.match(email)
+			
+		if not valid_username(username):
+			error = "Invalid username!"
+			self.redirect("/?error=" + error)
+			
+		self.response.write("hello " + username)
+
 	
 
 
 app = webapp2.WSGIApplication([
-    ('/', Index)
+    ('/', Index),
+	('/verify', Verification)
 ], debug=True)
