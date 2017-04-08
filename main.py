@@ -51,60 +51,72 @@ class Index(webapp2.RequestHandler):
 					<input type="text" name="username"/>
 				</label>
 				<br>
-				
+
 				<label>
 					Password:
 					<input type="password" name="password"/>
+                    <span class = "error"></span>
 				</label>
 				<br>
-				
+
 				<label>
 					Verify Password:
 					<input type="password" name="password_verify"/>
 				</label>
 				<br>
-				
+
 				<label>
 					Email (optional):
 					<input type="text" name="email_address"/>
 				</label>
 				<br>
-				
+
 				<input type="submit" value="Submit"/>
 			</form>
 			"""
 
 			content = page_header + forms + page_footer
 			self.response.write(content)
-			
+
 class Verification(webapp2.RequestHandler):
-	def post(self):
-		username = self.request.get("username")
-		USER_RE = re.compile("^[a-zA-Z0-9_-]{3,20}$")
-		password = self.request.get("password")
-		PASS_RE = re.compile("^.{3,20}$")
-		ver_password = self.request.get("password_verify")
-		email = self.request.get("email_address")
-		EMAIL_RE = self.request.get("^[\S]+@[\S]+.[\S]+$")
-		
-		def valid_username(username):
-			return username and USER_RE.match(username)
+    def post(self):
+    	username = self.request.get("username")
+    	password = self.request.get("password")
+    	ver_password = self.request.get("password_verify")
+    	email = self.request.get("email_address")
 
-		PASS_RE = re.compile(r"^.{3,20}$")
-		def valid_password(password):
-			return password and PASS_RE.match(password)
 
-		EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
-		def valid_email(email):
-			return not email or EMAIL_RE.match(email)
-			
-		if not valid_username(username):
-			error = "Invalid username!"
-			self.redirect("/?error=" + error)
-			
-		self.response.write("hello " + username)
+        USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+    	def valid_username(username):
+    		return username and USER_RE.match(username)
 
-	
+    	PASS_RE = re.compile(r"^.{3,20}$")
+    	def valid_password(password):
+    		return password and PASS_RE.match(password)
+
+    	EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
+    	def valid_email(email):
+    		return not email or EMAIL_RE.match(email)
+
+    	if not valid_username(username):
+    		error = "Invalid username!"
+    		self.redirect("/?error=" + error)
+
+        if not valid_password(password):
+            error = "Invalid password!"
+            self.redirect("/?error=" + error)
+
+        if password != ver_password:
+            error = "Passwords did not match"
+            self.redirect("/?error=" + error)
+
+        if not valid_email(email):
+            error = "Invalid email!"
+            self.redirect("/?error=" + error)
+
+    	self.response.write("Welcome " + username + "!")
+
+
 
 
 app = webapp2.WSGIApplication([
