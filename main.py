@@ -25,9 +25,9 @@ page_header = """
 <head>
     <title>Signup</title>
     <style type="text/css">
-        .error {
-            color: red;
-        }
+		    .error {
+     color: red;
+     }
     </style>
 </head>
 <body>
@@ -36,11 +36,49 @@ page_header = """
     </h1>
 """
 
+
 # html boilerplate for the bottom of every page
 page_footer = """
 </body>
 </html>
 """
+
+forms = """
+<form method="post">
+	<label>
+		Username:
+		<input type="text" name="username"/ value="%(username)s">
+		<span class = "error">%(error_username)s</span>
+	</label>
+	<br>
+
+	<label>
+		Password:
+		<input type="password" name="password" value=""/>
+		<span class = "error">%(error_password)s</span>
+	</label>
+	<br>
+
+	<label>
+		Verify Password:
+		<input type="password" name="password_verify" value=""/>
+		<span class = "error">%(error_match)s</span>
+	</label>
+	<br>
+
+	<label>
+		Email (optional):
+		<input type="text" name="email_address"/ value="%(email)s">
+		<span class = "error">%(error_email)s</span>
+	</label>
+	<br>
+
+	<input type="submit" value="Submit"/>
+</form>
+"""
+
+content = page_header + forms + page_footer
+params = dict(username = "", email = "", error_username = "", error_password = "", error_email = "", error_match = "")
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
@@ -53,70 +91,46 @@ def valid_password(password):
 EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
 def valid_email(email):
 	return not email or EMAIL_RE.match(email)
+	
 
 class Index(webapp2.RequestHandler):
-    def get(self):
-        forms = """
-        <form method="post">
-        	<label>
-        		Username:
-        		<input type="text" name="username"/ value="{{username}}">
-        	</label>
-        	<br>
+	def write_form(self):
+		#self.response.write(content % {"error": error})
+		self.response.write(content % params)
+	def get(self):
+		self.write_form()
 
-        	<label>
-        		Password:
-        		<input type="password" name="password" value=""/>
-                <span class = "error"></span>
-        	</label>
-        	<br>
+	def post(self):
+		username = self.request.get("username")
+		password = self.request.get("password")
+		ver_password = self.request.get("password_verify")
+		email = self.request.get("email_address")
+		error_ind = False
+		params['username'] = username
+		params['email'] = email
 
-        	<label>
-        		Verify Password:
-        		<input type="password" name="password_verify" value=""/>
-        	</label>
-        	<br>
+		
 
-        	<label>
-        		Email (optional):
-        		<input type="text" name="email_address"/ value="">
-        	</label>
-        	<br>
+		if not valid_username(username):
+			params['error_username'] = "Invalid username!"
+			error_ind = True
 
-        	<input type="submit" value="Submit"/>
-        </form>
-        """
-        content = page_header + forms + page_footer
-        self.response.write(content)
+		if not valid_password(password):
+			params['error_password'] = "Invalid password!"
+			error_ind = True
 
-    def post(self):
-    	username = self.request.get("username")
-        global_user = username
-    	password = self.request.get("password")
-    	ver_password = self.request.get("password_verify")
-    	email = self.request.get("email_address")
-        error_ind = False
+		if password != ver_password:
+			params['error_match'] = "Passwords did not match"
+			error_ind = True
 
-        params = dict(username = username, email = email)
-
-        if not valid_username(username):
-            params['error_username'] = "Invalid username!"
-            error_ind = True
-
-        if not valid_password(password):
-            params['error_password'] = "Invalid password!"
-            error_ind = True
-
-        if password != ver_password:
-            params['error_match'] = "Passwords did not match"
-            error_ind = True
-
-        if not valid_email(email):
-            params['error_email'] = "Invalid email!"
-            error_ind = True
-
-        if error_ind == False:
-            self.redirect('/welcome?username=' + username)
+		if not valid_email(email):
+			params['error_email'] = "Invalid email!"
+			error_ind = True
+			
+		if error_ind == True:
+			self.write_form()
+		if error_ind == False:
+			self.redirect('/welcome?username=' + username)
 
 class Welcome(webapp2.RequestHandler):
     def get(self):
